@@ -1,13 +1,13 @@
 require 'spec_helper'
 
 module ApiNavigator
-  describe Collection do
+  describe CollectionHash do
     let(:representation) do
       JSON.parse(Fixtures::Requests.book_response)
     end
 
     let(:collection) do
-      Collection.new(representation)
+      CollectionHash.new(representation)
     end
 
     it 'exposes the collection as methods' do

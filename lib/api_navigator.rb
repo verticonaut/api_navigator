@@ -1,4 +1,4 @@
-require 'api_navigator/collection'
+require 'api_navigator/collection_hash'
 require 'api_navigator/link'
 require 'api_navigator/attributes'
 require 'api_navigator/curie'

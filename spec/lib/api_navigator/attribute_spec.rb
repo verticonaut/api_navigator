@@ -30,7 +30,7 @@ module ApiNavigator
     end
 
     it 'is a collection' do
-      expect(Attributes.ancestors).to include(Collection)
+      expect(Attributes.ancestors).to include(CollectionHash)
     end
   end
 end
