@@ -7,7 +7,7 @@ module ApiNavigator
     end
 
     let(:attributes) do
-      Attributes.new(representation)
+      Attributes.new(representation.fetch('data'))
     end
 
     it 'does not set _links as an attribute' do

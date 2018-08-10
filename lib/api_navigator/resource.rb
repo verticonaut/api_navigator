@@ -18,15 +18,8 @@ module ApiNavigator
   class Resource
     extend Forwardable
 
-    # Public: Returns the attributes of the Resource as Attributes.
-    attr_reader :_attributes
-
     # Public: Returns the links of the Resource as a LinkCollection.
     attr_reader :_links
-
-    # Public: Returns the embedded resource of the Resource as a
-    # ResourceCollection.
-    attr_reader :_collection
 
     # Public: Returns the response object for the HTTP request that created this
     # resource, if one exists.
@@ -36,6 +29,19 @@ module ApiNavigator
     # head) to its self link.
     def_delegators :_self_link, :_get, :_post, :_put, :_delete, :_options, :_head
 
+    def self.from_representation(representation, entry_point, response = nil)
+      case (representation || {}).fetch('data', "_no_data")
+        when Hash
+          Resources::MemberResource.new(representation, entry_point, response)
+        when Array
+          Resources::CollectionResource.new(representation, entry_point, response)
+        when "_no_data"
+          new(representation, entry_point, response)
+        else
+          raise InvalidRepresentationError.new("Representation has not valid data element - must be Hash or List", representation)
+      end
+    end
+
     # Public: Initializes a Resource.
     #
     # representation - The hash with the HAL representation of the Resource.
@@ -44,14 +50,12 @@ module ApiNavigator
       representation = validate(representation)
       links          = representation['_links'] || {}
       @_links        = LinkCollection.new(links, links['curies'], entry_point)
-      @_collection   = ResourceCollection.new(representation['data'], entry_point)
-      @_attributes   = Attributes.new(representation)
       @_entry_point  = entry_point
       @_response     = response
     end
 
     def inspect
-      "#<#{self.class.name} self_link:#{_self_link.inspect} attributes:#{@_attributes.inspect}>"
+      "#<#{self.class.name} self_link:#{_self_link.inspect} attributes:#{@_attributes.inspect}  collection:#{@_collection.inspect}>"
     end
 
     def _success?
@@ -106,24 +110,21 @@ module ApiNavigator
     # This allows `api.posts` instead of `api.links.posts.resource`
     # as well as api.posts(id: 1) assuming posts is a link.
     def method_missing(method, *args, &block)
-      if args.any? && args.first.is_a?(Hash)
-        _links.send(method, [], &block)._expand(*args)
-      elsif !Array.method_defined?(method)
-        %i[_attributes _collection _links].each do |target|
-          target = send(target)
-          return target.send(method, *args, &block) if target.respond_to?(method.to_s)
+      # if _links.respond_to?(method, include_private)
+        if args.any? && args.first.is_a?(Hash)
+          return _links.send(method, [], &block)._expand(*args)
+        else
+          return _links.send(method, *args, &block)
         end
-        super
-      end
+      # end
+
+      super
     end
 
     # Internal: Accessory method to allow the resource respond to
     # methods that will hit method_missing.
     def respond_to_missing?(method, include_private = false)
-      %i[_attributes _collection _links].each do |target|
-        return true if send(target).respond_to?(method, include_private)
-      end
-      false
+      _links.respond_to?(method, include_private)
     end
   end
 end

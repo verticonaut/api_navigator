@@ -58,5 +58,24 @@ module ApiNavigator
     def build_curie(curie_hash, entry_point)
       Curie.new(curie_hash, entry_point)
     end
+
+    # Public: Provides method access to the collection values.
+    #
+    # It allows accessing a value as `collection.name` instead of
+    # `collection['name']`
+    #
+    # Returns an Object.
+    def method_missing(method_name, *_args, &_block)
+      @collection.fetch(method_name.to_s) do
+        raise "Could not find `#{method_name}` in #{self.class.name}"
+      end
+    end
+
+    # Internal: Accessory method to allow the collection respond to the
+    # methods that will hit method_missing.
+    def respond_to_missing?(method_name, _include_private = false)
+      @collection.include?(method_name.to_s)
+    end
+
   end
 end

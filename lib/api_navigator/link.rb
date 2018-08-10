@@ -168,7 +168,7 @@ module ApiNavigator
     def http_method(method, body = nil)
       @resource = begin
         response = @entry_point.connection.run_request(method, _url, body, nil)
-        Resource.new(response.body, @entry_point, response)
+        Resource.from_representation(response.body, @entry_point, response)
       end
     end
   end

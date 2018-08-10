@@ -5,7 +5,8 @@ require 'api_navigator/curie'
 require 'api_navigator/entry_point'
 require 'api_navigator/link_collection'
 require 'api_navigator/resource'
-require 'api_navigator/resource_collection'
+require 'api_navigator/resources/member_resource'
+require 'api_navigator/resources/collection_resource'
 require 'api_navigator/version'
 
 # 
