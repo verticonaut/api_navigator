@@ -3,12 +3,29 @@ require 'json'
 module Fixtures
   module Requests
 
+    # Fixtures::Requests.root_response
     def root_response(format: :json)
       response = {
         _links: {
           self:          { "href": "/" },
           books:         { "href": "/books" },
-          'api:authors': { "href": "/authors" },
+          filter: {
+            href: "/productions/1?categories={filter}",
+            templated: true,
+          },
+          two_links:     [
+            { "href": "/any_resource/1" },
+            { "href": "/any_resource/2" },
+          ],
+          'api:authors': { "href": "/api/authors" },
+          curies: [
+            {
+              name:      "api",
+              href:      "/docs/resources/{rel}",
+              templated: true,
+            }
+          ],
+          null_link: nil,
         }
       }
 
