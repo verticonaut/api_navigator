@@ -3,7 +3,7 @@ require 'spec_helper'
 module ApiNavigator
   describe Resource do
     let(:entry_point) do
-      EntryPoint.new('http://api.example.org/')
+      EntryPoint.new('http://api.example.org/', 'sample_client')
     end
 
     %w[type deprecation name profile title hreflang].each do |prop|
@@ -318,6 +318,22 @@ module ApiNavigator
         end
       end
 
+      describe "MemberResource instance creation" do
+        it "builds a resource of specific class if registered" do
+          ApiNavigator.register('sample_client')
+          ApiNavigator.register_resource('book', BookResource, client_identifier: 'sample_client')
+
+          resource = Resource.from_representation({
+            'data' => { 'id' => 1 },
+            '_meta' => { 'type' => 'book'} ,
+          }, entry_point)
+
+          expect(resource).to be_kind_of(BookResource)
+          expect(resource.foo).to be == 'bar'
+          expect(resource.id).to be == 1
+        end
+      end
+
       describe 'resource' do
         before do
           stub_request(entry_point.connection) do |stub|
@@ -326,6 +342,7 @@ module ApiNavigator
 
           Resource.stub(:new) { resource }
         end
+
 
         let(:resource) { double('Resource') }
         let(:link) { Link.new('orders', { 'href' => 'http://myapi.org/orders' }, entry_point) }

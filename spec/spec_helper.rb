@@ -17,10 +17,10 @@ require 'webmock/rspec'
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
 
-Dir['spec/fixtures/**/*.*'].each { |f| require_relative "../#{f}" }
-Dir['spec/support/**/*.*'].each { |f| require_relative "../#{f}" }
 require 'api_navigator'
 
+Dir['spec/fixtures/**/*.*'].each { |f| require_relative "../#{f}" }
+Dir['spec/support/**/*.*'].each { |f| require_relative "../#{f}" }
 
 RSpec.configure do |config|
   # include general helpers…
