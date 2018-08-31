@@ -29,13 +29,15 @@ module ApiNavigator
   class EntryPoint < Link
     extend Forwardable
 
+    attr_reader :client_identifier
+    
     # Public: Delegates common methods to be used with the Faraday connection.
     def_delegators :connection, :basic_auth, :digest_auth, :token_auth, :params, :params=
-
+    
     # Public: Initializes an EntryPoint.
     #
     # url    - A String with the entry point of your API.
-    def initialize(url, &_block)
+    def initialize(url, client_identifier=nil, &_block)
       @link = { 'href' => url }
       @entry_point = self
       @options = {}
@@ -43,6 +45,7 @@ module ApiNavigator
       @resource = nil
       @key = nil
       @uri_variables = nil
+      @client_identifier = client_identifier
       yield self if block_given?
     end
 

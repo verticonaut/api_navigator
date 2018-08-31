@@ -14,7 +14,7 @@ module ApiNavigator
         super
         
         collection_data = representation.fetch('data')
-        @_collection    = collection_data.map do |resource| Resources::MemberResource.new(resource, entry_point) end
+        @_collection    = collection_data.map do |resource| Resources::MemberResource.from_representation(resource, entry_point) end
       end
 
       # Internal: Delegate the method to various elements of the resource.

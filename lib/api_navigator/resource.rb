@@ -32,7 +32,7 @@ module ApiNavigator
     def self.from_representation(representation, entry_point, response = nil)
       case (representation || {}).fetch('data', "_no_data")
         when Hash
-          Resources::MemberResource.new(representation, entry_point, response)
+          Resources::MemberResource.from_representation(representation, entry_point, response)
         when Array
           Resources::CollectionResource.new(representation, entry_point, response)
         when "_no_data"
