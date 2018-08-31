@@ -7,7 +7,7 @@ module ApiNavigator
   #  collection['value']
   #  collection.value
   #
-  class Collection
+  class CollectionHash
     include Enumerable
 
     # Public: Initializes the Collection.
@@ -85,5 +85,6 @@ module ApiNavigator
     def respond_to_missing?(method_name, _include_private = false)
       @collection.include?(method_name.to_s)
     end
+
   end
 end

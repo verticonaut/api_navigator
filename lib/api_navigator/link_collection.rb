@@ -6,7 +6,7 @@ module ApiNavigator
   #   resource.links['author']
   #   resource.links.author
   #
-  class LinkCollection < Collection
+  class LinkCollection < CollectionHash
     attr_reader :_curies
 
     # Public: Initializes a LinkCollection.
@@ -58,5 +58,6 @@ module ApiNavigator
     def build_curie(curie_hash, entry_point)
       Curie.new(curie_hash, entry_point)
     end
+
   end
 end

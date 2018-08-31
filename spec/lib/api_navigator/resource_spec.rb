@@ -1,8 +1,7 @@
-require_relative '../test_helper'
-require 'api_navigator'
+require 'spec_helper'
 
 module ApiNavigator
-  describe Link do
+  describe Resource do
     let(:entry_point) do
       EntryPoint.new('http://api.example.org/')
     end
@@ -11,27 +10,28 @@ module ApiNavigator
       describe prop do
         it 'returns the property value' do
           link = Link.new('key', { prop => 'value' }, entry_point)
-          link.send("_#{prop}").must_equal 'value'
+          expect(link.send("_#{prop}")).to be == 'value'
         end
 
         it 'returns nil if the property is not present' do
           link = Link.new('key', {}, entry_point)
-          link.send("_#{prop}").must_equal nil
+          expect(link.send("_#{prop}")).to be_nil
         end
       end
+
     end
 
     describe '_templated?' do
       it 'returns true if the link is templated' do
         link = Link.new('key', { 'templated' => true }, entry_point)
 
-        link._templated?.must_equal true
+        expect(link._templated?).to be_truthy
       end
 
       it 'returns false if the link is not templated' do
         link = Link.new('key', {}, entry_point)
 
-        link._templated?.must_equal false
+        expect(link._templated?).to be_falsey
       end
     end
 
@@ -39,55 +39,55 @@ module ApiNavigator
       it 'returns a list of required variables' do
         link = Link.new('key', { 'href' => '/orders{?id,owner}', 'templated' => true }, entry_point)
 
-        link._variables.must_equal %w[id owner]
+        expect(link._variables).to match_array %w[id owner]
       end
 
       it 'returns an empty array for untemplated links' do
         link = Link.new('key', { 'href' => '/orders' }, entry_point)
 
-        link._variables.must_equal []
+        expect(link._variables).to be_empty
       end
     end
 
-    describe '_expand' do
+    context '_expand templated links' do
       describe 'required argument' do
         it 'builds a Link with the templated URI representation' do
           link = Link.new('key', { 'href' => '/orders/{id}', 'templated' => true }, entry_point)
-          link._expand(id: '1')._url.must_equal '/orders/1'
+          expect(link._expand(id: '1')._url).to be == '/orders/1'
         end
 
         it 'expands an uri template without variables' do
           link = Link.new('key', { 'href' => '/orders/{id}', 'templated' => true }, entry_point)
-          link._expand._url.must_equal '/orders/'
-          link._url.must_equal '/orders/'
+          expect(link._expand._url).to be == '/orders/'
+          expect(link._url).to be == '/orders/'
         end
       end
 
       describe 'query string argument' do
         it 'builds a Link with the templated URI representation' do
           link = Link.new('key', { 'href' => '/orders{?id}', 'templated' => true }, entry_point)
-          link._expand(id: '1')._url.must_equal '/orders?id=1'
+          expect(link._expand(id: '1')._url).to be == '/orders?id=1'
         end
 
         it 'expands an uri template without variables' do
           link = Link.new('key', { 'href' => '/orders{?id}', 'templated' => true }, entry_point)
-          link._expand._url.must_equal '/orders'
-          link._url.must_equal '/orders'
+          expect(link._expand._url).to be == '/orders'
+          expect(link._url).to be == '/orders'
         end
 
         it 'does not expand unknown variables' do
           link = Link.new('key', { 'href' => '/orders{?id}', 'templated' => true }, entry_point)
-          link._expand(unknown: '1')._url.must_equal '/orders'
+          expect(link._expand(unknown: '1')._url).to be == '/orders'
         end
 
         it 'only expands known variables' do
           link = Link.new('key', { 'href' => '/orders{?id}', 'templated' => true }, entry_point)
-          link._expand(unknown: '1', id: '2')._url.must_equal '/orders?id=2'
+          expect(link._expand(unknown: '1', id: '2')._url).to be == '/orders?id=2'
         end
 
         it 'only expands templated links' do
           link = Link.new('key', { 'href' => '/orders{?id}', 'templated' => false }, entry_point)
-          link._expand(id: '1')._url.must_equal '/orders{?id}'
+          expect(link._expand(id: '1')._url).to be == '/orders{?id}'
         end
       end
     end
@@ -96,44 +96,46 @@ module ApiNavigator
       it 'expands an uri template without variables' do
         link = Link.new('key', { 'href' => '/orders{?id}', 'templated' => true }, entry_point)
 
-        link._url.must_equal '/orders'
+        expect(link._url).to be == '/orders'
       end
 
       it 'expands an uri template with variables' do
         link = Link.new('key', { 'href' => '/orders{?id}', 'templated' => true }, entry_point, id: 1)
 
-        link._url.must_equal '/orders?id=1'
+        expect(link._url).to be == '/orders?id=1'
       end
 
       it 'does not expand an uri template with unknown variables' do
         link = Link.new('key', { 'href' => '/orders{?id}', 'templated' => true }, entry_point, unknown: 1)
 
-        link._url.must_equal '/orders'
+        expect(link._url).to be == '/orders'
       end
 
       it 'only expands known variables in a uri template' do
         link = Link.new('key', { 'href' => '/orders{?id}', 'templated' => true }, entry_point, unknown: 1, id: 2)
 
-        link._url.must_equal '/orders?id=2'
+        expect(link._url).to be == '/orders?id=2'
       end
 
       it 'returns the link when no uri template' do
         link = Link.new('key', { 'href' => '/orders' }, entry_point)
-        link._url.must_equal '/orders'
+
+        expect(link._url).to be == '/orders'
       end
 
       it 'aliases to_s to _url' do
         link = Link.new('key', { 'href' => '/orders{?id}', 'templated' => true }, entry_point, id: 1)
 
-        link.to_s.must_equal '/orders?id=1'
+        expect(link.to_s).to be == '/orders?id=1'
       end
     end
 
     describe '_resource' do
       it 'builds a resource with the link href representation' do
-        Resource.expects(:new)
+        expect(Resource).to receive(:new)
 
         link = Link.new('key', { 'href' => '/' }, entry_point)
+
         stub_request(entry_point.connection) do |stub|
           stub.get('http://api.example.org/') { [200, {}, nil] }
         end
@@ -150,7 +152,7 @@ module ApiNavigator
           stub.get('http://api.example.org/productions/1') { [200, {}, nil] }
         end
 
-        link._get.must_be_kind_of Resource
+        expect(link._get).to be_kind_of Resource
       end
 
       it 'raises exceptions by default' do
@@ -160,7 +162,7 @@ module ApiNavigator
           stub.get('http://api.example.org/productions/1') { [400, {}, nil] }
         end
 
-        -> { link._get }.must_raise Faraday::ClientError
+        expect { link._get }.to raise_error Faraday::ClientError
       end
     end
 
@@ -172,7 +174,7 @@ module ApiNavigator
           stub.options('http://api.example.org/productions/1') { [200, {}, nil] }
         end
 
-        link._options.must_be_kind_of Resource
+        expect(link._options).to be_kind_of Resource
       end
     end
 
@@ -184,7 +186,7 @@ module ApiNavigator
           stub.head('http://api.example.org/productions/1') { [200, {}, nil] }
         end
 
-        link._head.must_be_kind_of Resource
+        expect(link._head).to be_kind_of Resource
       end
     end
 
@@ -196,7 +198,7 @@ module ApiNavigator
           stub.delete('http://api.example.org/productions/1') { [200, {}, nil] }
         end
 
-        link._delete.must_be_kind_of Resource
+        expect(link._delete).to be_kind_of Resource
       end
     end
 
@@ -208,7 +210,7 @@ module ApiNavigator
           stub.post('http://api.example.org/productions/1') { [200, {}, nil] }
         end
 
-        link._post('foo' => 'bar').must_be_kind_of Resource
+        expect(link._post('foo' => 'bar')).to be_kind_of Resource
       end
 
       it 'defaults params to an empty hash' do
@@ -216,7 +218,7 @@ module ApiNavigator
           stub.post('http://api.example.org/productions/1') { [200, {}, nil] }
         end
 
-        link._post.must_be_kind_of Resource
+        expect(link._post).to be_kind_of Resource
       end
     end
 
@@ -228,7 +230,7 @@ module ApiNavigator
           stub.put('http://api.example.org/productions/1', '{"foo":"bar"}') { [200, {}, nil] }
         end
 
-        link._put('foo' => 'bar').must_be_kind_of Resource
+        expect(link._put('foo' => 'bar')).to be_kind_of Resource
       end
 
       it 'defaults params to an empty hash' do
@@ -236,7 +238,7 @@ module ApiNavigator
           stub.put('http://api.example.org/productions/1') { [200, {}, nil] }
         end
 
-        link._put.must_be_kind_of Resource
+        expect(link._put).to be_kind_of Resource
       end
     end
 
@@ -248,7 +250,7 @@ module ApiNavigator
           stub.patch('http://api.example.org/productions/1', '{"foo":"bar"}') { [200, {}, nil] }
         end
 
-        link._patch('foo' => 'bar').must_be_kind_of Resource
+        expect(link._patch('foo' => 'bar')).to be_kind_of Resource
       end
 
       it 'defaults params to an empty hash' do
@@ -256,7 +258,7 @@ module ApiNavigator
           stub.patch('http://api.example.org/productions/1') { [200, {}, nil] }
         end
 
-        link._patch.must_be_kind_of Resource
+        expect(link._patch).to be_kind_of Resource
       end
     end
 
@@ -264,88 +266,84 @@ module ApiNavigator
       it 'outputs a custom-friendly output' do
         link = Link.new('key', { 'href' => '/productions/1' }, 'foo')
 
-        link.inspect.must_include 'Link'
-        link.inspect.must_include '"href"=>"/productions/1"'
+        expect(link.inspect).to include 'Link'
+        expect(link.inspect).to include '"href"=>"/productions/1"'
       end
     end
+
 
     describe 'method_missing' do
       describe 'delegation' do
         it 'delegates when link key matches' do
-          resource = Resource.new({ '_links' => { 'orders' => { 'href' => '/orders' } } }, entry_point)
+          resource = Resource.from_representation({ '_links' => { 'orders' => { 'href' => '/orders' } } }, entry_point)
 
           stub_request(entry_point.connection) do |stub|
-            stub.get('http://api.example.org/orders') { [200, {}, { '_embedded' => { 'orders' => [{ 'id' => 1 }] } }] }
+            stub.get('http://api.example.org/orders') { [200, {}, { 'data' => [{'data' => {'id' => 1 }}] }] }
           end
 
-          resource.orders._embedded.orders.first.id.must_equal 1
-          resource.orders.first.id.must_equal 1
+          expect(resource.orders.first.id).to be == 1
+        end
+
+        it 'delegates to data when data and link identifier is present' do
+          resource = Resource.from_representation({
+            'data' => { 'orders' => [ 'data' =>  { 'id' => 9 }] },
+            '_links' => { 'orders' => { 'href' => '/orders' } }
+          }, entry_point)
+
+          stub_request(entry_point.connection) do |stub|
+            stub.get('http://api.example.org/orders') { [200, {}, { 'data' => [{'data' => {'id' => 1 }}] }] }
+          end
+
+          expect(resource.orders.first.id).to be == 9
         end
 
         it 'can handle false values in the response' do
-          resource = Resource.new({ '_links' => { 'orders' => { 'href' => '/orders' } } }, entry_point)
+          resource = Resource.from_representation({ '_links' => { 'orders' => { 'href' => '/orders' } } }, entry_point)
 
           stub_request(entry_point.connection) do |stub|
-            stub.get('http://api.example.org/orders') { [200, {}, { 'any' => false }] }
+            stub.get('http://api.example.org/orders') { [200, {}, { 'data' => {'any' => false }}] }
           end
 
-          resource.orders.any.must_equal false
+          expect(resource.orders.any).to be_falsey
         end
 
         it "doesn't delegate when link key doesn't match" do
-          resource = Resource.new({ '_links' => { 'foos' => { 'href' => '/orders' } } }, entry_point)
+          resource = Resource.from_representation({ '_links' => { 'foos' => { 'href' => '/orders' } } }, entry_point)
 
           stub_request(entry_point.connection) do |stub|
-            stub.get('http://api.example.org/orders') { [200, {}, { '_embedded' => { 'orders' => [{ 'id' => 1 }] } }] }
+            stub.get('http://api.example.org/orders') { [200, {}, { 'data' => [{ 'data' => { 'id' => 1 }}] }] }
           end
 
-          resource.foos._embedded.orders.first.id.must_equal 1
-          resource.foos.first.must_equal nil
-        end
-
-        it 'backtracks when navigating links' do
-          resource = Resource.new({ '_links' => { 'next' => { 'href' => '/page2' } } }, entry_point)
-
-          stub_request(entry_point.connection) do |stub|
-            stub.get('http://api.example.org/page2') { [200, {}, { '_links' => { 'next' => { 'href' => 'http://api.example.org/page3' } } }] }
-          end
-
-          resource.next._links.next._url.must_equal 'http://api.example.org/page3'
+          expect(resource.foos.first.id).to be == 1
         end
       end
 
       describe 'resource' do
         before do
           stub_request(entry_point.connection) do |stub|
-            stub.get('http://myapi.org/orders') { [200, {}, '{"resource": "This is the resource"}'] }
+            stub.get('http://myapi.org/orders') { [200, {}, { 'data' => {'any' => false }}] }
           end
 
-          Resource.stubs(:new).returns(resource)
+          Resource.stub(:new) { resource }
         end
 
-        let(:resource) { mock('Resource') }
+        let(:resource) { double('Resource') }
         let(:link) { Link.new('orders', { 'href' => 'http://myapi.org/orders' }, entry_point) }
 
         it 'delegates unkown methods to the resource' do
-          Resource.expects(:new).returns(resource).at_least_once
-          resource.expects(:embedded)
+          expect(Resource).to receive(:new) {resource }.at_least(1)
+          expect(resource).to receive(:unknown_method)
 
-          link.embedded
+          link.unknown_method
         end
 
         it 'raises an error when the method does not exist in the resource' do
-          -> { link.this_method_does_not_exist }.must_raise NoMethodError
-        end
-
-        it 'responds to missing methods' do
-          resource.expects(:respond_to?).with('orders').returns(false)
-          resource.expects(:respond_to?).with('embedded').returns(true)
-          link.respond_to?(:embedded).must_equal true
+          expect { link.this_method_does_not_exist }.to raise_error NoMethodError
         end
 
         it 'does not delegate to_ary to resource' do
-          resource.expects(:to_ary).never
-          [[link, link]].flatten.must_equal [link, link]
+          expect(resource).to receive(:to_ary).never
+          expect([[link, link]].flatten).to be == [link, link]
         end
       end
     end

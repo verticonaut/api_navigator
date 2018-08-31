@@ -7,7 +7,7 @@ module ApiNavigator
     end
 
     let(:attributes) do
-      Attributes.new(representation)
+      Attributes.new(representation.fetch('data'))
     end
 
     it 'does not set _links as an attribute' do
@@ -30,7 +30,7 @@ module ApiNavigator
     end
 
     it 'is a collection' do
-      expect(Attributes.ancestors).to include(Collection)
+      expect(Attributes.ancestors).to include(CollectionHash)
     end
   end
 end

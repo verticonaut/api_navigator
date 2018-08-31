@@ -143,7 +143,6 @@ module ApiNavigator
       end
     end
 
-
     describe 'get' do
       it 'sends a GET request with the link url' do
         link = Link.new('key', { 'href' => '/productions/1' }, entry_point)
@@ -271,82 +270,72 @@ module ApiNavigator
       end
     end
 
+
     describe 'method_missing' do
       describe 'delegation' do
         it 'delegates when link key matches' do
-          resource = Resource.new({ '_links' => { 'orders' => { 'href' => '/orders' } } }, entry_point)
+          resource = Resource.from_representation({ '_links' => { 'orders' => { 'href' => '/orders' } } }, entry_point)
 
           stub_request(entry_point.connection) do |stub|
-            stub.get('http://api.example.org/orders') { [200, {}, { 'data' => [{ 'id' => 1 }] }] }
+            stub.get('http://api.example.org/orders') { [200, {}, { 'data' => [{'data' => {'id' => 1 }}] }] }
           end
-          binding.pry
-          excpet(resource.orders.first.id).to be == 1
+
+          expect(resource.orders.first.id).to be == 1
         end
 
         it 'can handle false values in the response' do
-          resource = Resource.new({ '_links' => { 'orders' => { 'href' => '/orders' } } }, entry_point)
+          resource = Resource.from_representation({ '_links' => { 'orders' => { 'href' => '/orders' } } }, entry_point)
 
           stub_request(entry_point.connection) do |stub|
-            stub.get('http://api.example.org/orders') { [200, {}, { 'any' => false }] }
+            stub.get('http://api.example.org/orders') { [200, {}, { 'data' => {'any' => false }}] }
           end
 
-          resource.orders.any.must_equal false
+          expect(resource.orders.any).to be_falsey
         end
 
         it "doesn't delegate when link key doesn't match" do
-          resource = Resource.new({ '_links' => { 'foos' => { 'href' => '/orders' } } }, entry_point)
+          resource = Resource.from_representation({ '_links' => { 'foos' => { 'href' => '/orders' } } }, entry_point)
 
           stub_request(entry_point.connection) do |stub|
-            stub.get('http://api.example.org/orders') { [200, {}, { 'data' => [{ 'id' => 1 }] }] }
+            stub.get('http://api.example.org/orders') { [200, {}, { 'data' => [{ 'data' => { 'id' => 1 }}] }] }
           end
 
-          resource.foos._embedded.orders.first.id.must_equal 1
-          resource.foos.first.must_equal nil
-        end
-
-        it 'backtracks when navigating links' do
-          resource = Resource.new({ '_links' => { 'next' => { 'href' => '/page2' } } }, entry_point)
-
-          stub_request(entry_point.connection) do |stub|
-            stub.get('http://api.example.org/page2') { [200, {}, { '_links' => { 'next' => { 'href' => 'http://api.example.org/page3' } } }] }
-          end
-
-          resource.next._links.next._url.must_equal 'http://api.example.org/page3'
+          expect(resource.foos.first.id).to be == 1
         end
       end
 
       describe 'resource' do
         before do
           stub_request(entry_point.connection) do |stub|
-            stub.get('http://myapi.org/orders') { [200, {}, '{"resource": "This is the resource"}'] }
+            stub.get('http://myapi.org/orders') { [200, {}, { 'data' => {'any' => false }}] }
           end
 
-          Resource.stubs(:new).returns(resource)
+          Resource.stub(:new) { resource }
         end
 
-        let(:resource) { mock('Resource') }
+        let(:resource) { double('Resource') }
         let(:link) { Link.new('orders', { 'href' => 'http://myapi.org/orders' }, entry_point) }
 
         it 'delegates unkown methods to the resource' do
-          Resource.expects(:new).returns(resource).at_least_once
-          resource.expects(:unknown_method)
+          expect(Resource).to receive(:new) {resource }.at_least(1)
+          expect(resource).to receive(:unknown_method)
 
           link.unknown_method
         end
 
         it 'raises an error when the method does not exist in the resource' do
-          -> { link.this_method_does_not_exist }.must_raise NoMethodError
+          expect { link.this_method_does_not_exist }.to raise_error NoMethodError
         end
 
-        it 'responds to missing methods' do
-          resource.expects(:respond_to?).with('orders').returns(false)
-          resource.expects(:respond_to?).with('embedded').returns(true)
-          link.respond_to?(:embedded).must_equal true
-        end
+        # it 'responds to missing methods' do
+        #   expect(resource).to receive(:respond_to?).with('orders') { false }
+
+        #   expect(link.respond_to?(:hui)).to be_falsey
+        # end
 
         it 'does not delegate to_ary to resource' do
-          resource.expects(:to_ary).never
-          [[link, link]].flatten.must_equal [link, link]
+          expect(resource).to receive(:to_ary).never
+          expect([[link, link]].flatten).to be == [link, link]
         end
       end
     end

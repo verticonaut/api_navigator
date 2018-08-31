@@ -125,31 +125,16 @@ module ApiNavigator
     # Internal: Delegate the method further down the API if the resource cannot serve it.
     def method_missing(method, *args, &block)
       if _resource.respond_to?(method.to_s)
-        result = _resource.send(method, *args, &block)
-        result.nil? ? delegate_method(method, *args, &block) : result
+        _resource.send(method, *args, &block)
       else
         super
       end
     end
 
-    # Internal: Delegate the method to the API if the resource cannot serve it.
-    #
-    # This allows `api.posts` instead of `api._links.posts.embedded.posts`
-    def delegate_method(method, *args, &block)
-      return unless @key && _resource.respond_to?(@key)
-      @delegate ||= _resource.send(@key)
-      return unless @delegate && @delegate.respond_to?(method.to_s)
-      @delegate.send(method, *args, &block)
-    end
-
     # Internal: Accessory method to allow the link respond to the
     # methods that will hit method_missing.
     def respond_to_missing?(method, _include_private = false)
-      if @key && _resource.respond_to?(@key) && (delegate = _resource.send(@key)) && delegate.respond_to?(method.to_s)
-        true
-      else
-        _resource.respond_to?(method.to_s)
-      end
+      _resource.respond_to?(method.to_s)
     end
 
     # Internal: avoid delegating to resource
@@ -168,7 +153,7 @@ module ApiNavigator
     def http_method(method, body = nil)
       @resource = begin
         response = @entry_point.connection.run_request(method, _url, body, nil)
-        Resource.new(response.body, @entry_point, response)
+        Resource.from_representation(response.body, @entry_point, response)
       end
     end
   end
