@@ -1,0 +1,108 @@
+# root
+
+data: {},
+links: {},
+meta: {},
+errors*: []
+
+
+# singular
+
+data: {
+  atr1:
+  atr2:
+  nested: {
+
+  }
+},
+links: {
+  self: "self-url"
+}
+
+
+# multiple
+
+data: [
+
+]
+},
+links: {
+  self: "self-url"
+}
+
+# http://localhost:3000/sample/book/1?include=[publisher,authors]&render=compact
+data: {
+  title: 'Book 1',
+  body: 'Book 1 Body',
+  year: 1999,
+  publisher: {
+    data: {
+      name: 'Manning Publisher',
+    },
+    _links: {
+      self: {
+        href: "http://localhost:3000/sample/publisher/1",
+      }
+    },
+    _meta: { type: "book" }                              
+  },
+  authors: {
+    data: [
+      # author1,
+      # author2
+    ],
+    _links: {},
+    _meta: {}
+  }
+},
+_links: {
+  self: {
+    href: "http://localhost:3000/sample/books/1",
+  },
+  authors: {
+    href: "http://localhost:3000/sample/book/1/authors",
+  },
+  publisher: {
+    href: "http://localhost:3000/sample/book/1/publisher",
+  },
+},
+_meta: { type: "book" }                              
+
+
+data: {
+  title: 'Book 1',
+  body: 'Book 1 Body',
+  year: 1999,
+  _relations: {
+    publisher: {
+      data: {
+        name: 'Manning Publisher',
+      },
+      _links: {
+        self: {
+          href: "http://localhost:3000/sample/publisher/1",
+        }
+      },
+      _meta: { type: "book" }                              
+    },
+    authors: {
+      data: [
+        # author1,
+        # author2
+      ],
+      _links: {},
+      _meta: {}
+    }
+},
+_links: {
+  self: {
+    href: "http://localhost:3000/sample/books/1",
+  },
+  authors: {
+    href: "http://localhost:3000/sample/book/1/authors",
+  },
+  publisher: {
+    href: "http://localhost:3000/sample/book/1/publisher",
+  },
+},
+_meta: { type: "book" }                              
